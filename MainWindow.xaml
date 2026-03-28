@@ -1,0 +1,382 @@
+﻿<Window x:Class="MediaApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+        Title="Lumière Player" Height="720" Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="#0A0A0F">
+
+    <Window.Resources>
+
+        <!-- ── Control Button (round) ── -->
+        <Style x:Key="CtrlBtn" TargetType="Button">
+            <Setter Property="Width"           Value="48"/>
+            <Setter Property="Height"          Value="48"/>
+            <Setter Property="Margin"          Value="6,0"/>
+            <Setter Property="Background"      Value="#16161F"/>
+            <Setter Property="Foreground"      Value="#C89B3C"/>
+            <Setter Property="BorderBrush"     Value="#2A2A3A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize"        Value="16"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="24">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background"    Value="#C89B3C"/>
+                                <Setter Property="Foreground"                    Value="#0A0A0F"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"   Value="#C89B3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#A07828"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Play/Pause (larger gold) ── -->
+        <Style x:Key="PlayBtn" TargetType="Button" BasedOn="{StaticResource CtrlBtn}">
+            <Setter Property="Width"       Value="64"/>
+            <Setter Property="Height"      Value="64"/>
+            <Setter Property="FontSize"    Value="20"/>
+            <Setter Property="Background"  Value="#C89B3C"/>
+            <Setter Property="Foreground"  Value="#0A0A0F"/>
+            <Setter Property="BorderBrush" Value="#C89B3C"/>
+        </Style>
+
+        <!-- ── Generic rounded button ── -->
+        <Style x:Key="RoundedBtn" TargetType="Button">
+            <Setter Property="Background"      Value="#C89B3C"/>
+            <Setter Property="Foreground"      Value="#0A0A0F"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#DDB04A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#A07828"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Volume Slider (fully custom, no CornerRadius on RepeatButton directly) ── -->
+        <Style x:Key="GoldSlider" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center" Height="20">
+                            <Track x:Name="PART_Track" VerticalAlignment="Center">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  Cursor="Hand">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="#C89B3C" Height="4" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="14" Height="14" Cursor="Hand" Focusable="False">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Fill="#C89B3C" Width="14" Height="14"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  Cursor="Hand">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="#2A2A3A" Height="4" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Playlist Item ── -->
+        <Style TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Foreground"  Value="#AAAACC"/>
+            <Setter Property="FontFamily"  Value="Segoe UI"/>
+            <Setter Property="FontSize"    Value="12"/>
+            <Setter Property="Cursor"      Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent"
+                                CornerRadius="6" Margin="0,2" Padding="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="Icon" Text="♪"
+                                           Foreground="#333355"
+                                           VerticalAlignment="Center"
+                                           FontSize="10"/>
+                                <TextBlock x:Name="Lbl" Grid.Column="1"
+                                           Text="{TemplateBinding Content}"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd"   Property="Background" Value="#161625"/>
+                                <Setter TargetName="Icon" Property="Foreground" Value="#C89B3C"/>
+                                <Setter TargetName="Lbl"  Property="Foreground" Value="#DDDDEE"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd"   Property="Background" Value="#1F1A06"/>
+                                <Setter TargetName="Icon" Property="Text"       Value="▶"/>
+                                <Setter TargetName="Icon" Property="Foreground" Value="#C89B3C"/>
+                                <Setter TargetName="Lbl"  Property="Foreground" Value="#F0C96A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="270"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ══════════════ SIDEBAR ══════════════ -->
+        <Border Background="#0E0E18"
+                BorderBrush="#1A1A2A"
+                BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Logo -->
+                <StackPanel Margin="20,28,20,20">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="D"
+                                   FontFamily="Georgia"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#C89B3C"/>
+                        <TextBlock Text="INOE"
+                                   FontFamily="Georgia"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground= "White"/>
+                    </StackPanel>
+                    <Rectangle Height="1" Margin="0,10,0,0">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#C89B3C" Offset="0"/>
+                                <GradientStop Color="Transparent" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <TextBlock Text="M E D I A   P L A Y E R"
+                               Foreground="#444466"
+                               FontSize="8"
+                               FontFamily="Consolas"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Playlist -->
+                <Grid Grid.Row="1" Margin="12,0,12,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Q U E U E"
+                               Foreground="#444466"
+                               FontSize="8"
+                               FontFamily="Consolas"
+                               Margin="6,0,0,10"/>
+                    <ListBox x:Name="PlaylistBox"
+                             Grid.Row="1"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             SelectionChanged="PlaylistBox_SelectionChanged"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                </Grid>
+
+                <!-- Add Files -->
+                <Border Grid.Row="2" Margin="16,12,16,20">
+                    <Button Style="{StaticResource RoundedBtn}"
+                            Height="40"
+                            Padding="16,0"
+                            Click="AddFiles_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="+" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="A D D   F I L E S" FontSize="11" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════ MAIN PLAYER ══════════════ -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Video Area -->
+            <Border Background="#000000">
+                <vlc:VideoView x:Name="VideoView"
+                               MouseLeftButtonDown="VideoView_MouseLeftButtonDown"
+                               MouseMove="Video_MouseMove"
+                               MouseLeftButtonUp="Video_MouseUp"
+                               PreviewMouseLeftButtonDown="Video_MouseDown"/>
+                
+            </Border>
+            
+
+            <!-- Bottom Controls Panel -->
+            <Border Grid.Row="1"
+                    Background="#0C0C16"
+                    BorderBrush="#1A1A2A"
+                    BorderThickness="0,1,0,0"
+                    Padding="24,16,24,20">
+                <StackPanel>
+                    <!-- TIMELINE -->
+                    <Slider x:Name="TimelineSlider"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="0"
+                            Margin="0,0,0,10"
+                            PreviewMouseDown="Timeline_PreviewMouseDown"
+                            PreviewMouseUp="Timeline_PreviewMouseUp"/>
+
+                    <!-- URL Row -->
+                    <Grid Margin="0,0,0,14">
+                        
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Background="#13131E"
+                                BorderBrush="#2A2A3A"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <TextBox x:Name="UrlBox"
+                                     Background="Transparent"
+                                     Foreground="#CCCCDD"
+                                     BorderThickness="0"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     VerticalAlignment="Center"
+                                     Padding="14,8"
+                                     CaretBrush="#C89B3C"/>
+                        </Border>
+
+                        <Button Grid.Column="1"
+                                Style="{StaticResource RoundedBtn}"
+                                Content="▶  PLAY URL"
+                                Click="PlayUrl_Click"
+                                Margin="10,0,0,0"
+                                Height="36"
+                                Padding="16,0"/>
+
+                        <!-- Volume -->
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="20,0,0,0">
+                            <TextBlock Text="🔊"
+                                       Foreground="#C89B3C"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <Slider x:Name="VolumeSlider"
+                                    Style="{StaticResource GoldSlider}"
+                                    Minimum="0" Maximum="100" Value="80"
+                                    Width="120"
+                                    VerticalAlignment="Center"
+                                    ValueChanged="VolumeSlider_ValueChanged"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Playback Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource CtrlBtn}"
+                                Click="Back10_Click"
+                                ToolTip="Back 10s">
+                            <TextBlock Text="⏪" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <Button Style="{StaticResource PlayBtn}"
+                                Click="PlayPause_Click"
+                                ToolTip="Play / Pause">
+                            <TextBlock Text="⏯" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <Button Style="{StaticResource CtrlBtn}"
+                                Click="Forward10_Click"
+                                ToolTip="Forward 10s">
+                            <TextBlock Text="⏩" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <Button Style="{StaticResource CtrlBtn}"
+                                Click="Stop_Click"
+                                ToolTip="Stop"
+                                Margin="20,0,6,0">
+                            <TextBlock Text="⏹" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <Button Style="{StaticResource CtrlBtn}"
+                                Click="Fullscreen_Click"
+                                ToolTip="Fullscreen">
+                            <TextBlock Text="⛶" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
