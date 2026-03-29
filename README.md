@@ -1,4 +1,4 @@
-# 🎬 Lumière Player
+# 🎬 Dino Player
 
 A sleek, dark-themed desktop video player for Windows built with **WPF (.NET 8)** and **LibVLCSharp**. Supports local files, network streams, playlists, and swipe-to-seek.
 
